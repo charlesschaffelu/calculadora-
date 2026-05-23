@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora LED Neon</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #121214;
+        }
+
+        /* Estrutura da Calculadora */
+        .calculator {
+            background-color: #1e1e24;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), inset 0 2px 5px rgba(255, 255, 255, 0.05);
+            border: 2px solid #2d2d35;
+            width: 340px;
+        }
+
+        /* Tela de Exibição */
+        .display {
+            width: 100%;
+            height: 80px;
+            background-color: #0b0b0d;
+            border: 2px solid #333;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 20px;
+            color: #00ff66;
+            font-size: 2rem;
+            font-family: monospace;
+            text-shadow: 0 0 10px rgba(0, 255, 102, 0.5);
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        /* Grade de Botões */
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        /* Estilização Base dos Botões (Efeito LED Desligado/Suave) */
+        .btn {
+            border: none;
+            outline: none;
+            padding: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            background-color: #2a2a32;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Cores dos LEDs customizados por classe */
+        .btn-cyan { color: #00f0ff; border: 1px solid rgba(0, 240, 255, 0.2); box-shadow: inset 0 0 8px rgba(0, 240, 255, 0.1); }
+        .btn-pink { color: #ff007f; border: 1px solid rgba(255, 0, 127, 0.2); box-shadow: inset 0 0 8px rgba(255, 0, 127, 0.1); }
+        .btn-amber { color: #ffaa00; border: 1px solid rgba(255, 170, 0, 0.2); box-shadow: inset 0 0 8px rgba(255, 170, 0, 0.1); }
+
+        /* Animação de pulsar constante (Standby do LED) */
+        @keyframes pulseCyan {
+            0%, 100% { text-shadow: 0 0 4px rgba(0, 240, 255, 0.3); box-shadow: inset 0 0 8px rgba(0, 240, 255, 0.1), 0 0 5px rgba(0, 240, 255, 0.1); }
+            50% { text-shadow: 0 0 12px rgba(0, 240, 255, 0.8); box-shadow: inset 0 0 12px rgba(0, 240, 255, 0.3), 0 0 12px rgba(0, 240, 255, 0.3); }
+        }
+        @keyframes pulsePink {
+            0%, 100% { text-shadow: 0 0 4px rgba(255, 0, 127, 0.3); box-shadow: inset 0 0 8px rgba(255, 0, 127, 0.1), 0 0 5px rgba(255, 0, 127, 0.1); }
+            50% { text-shadow: 0 0 12px rgba(255, 0, 127, 0.8); box-shadow: inset 0 0 12px rgba(255, 0, 127, 0.3), 0 0 12px rgba(255, 0, 127, 0.3); }
+        }
+        @keyframes pulseAmber {
+            0%, 100% { text-shadow: 0 0 4px rgba(255, 170, 0, 0.3); box-shadow: inset 0 0 8px rgba(255, 170, 0, 0.1), 0 0 5px rgba(255, 170, 0, 0.1); }
+            50% { text-shadow: 0 0 12px rgba(255, 170, 0, 0.8); box-shadow: inset 0 0 12px rgba(255, 170, 0, 0.3), 0 0 12px rgba(255, 170, 0, 0.3); }
+        }
+
+        /* Aplicando o pulsar suave contínuo */
+        .btn-cyan { animation: pulseCyan 3s infinite ease-in-out; }
+        .btn-pink { animation: pulsePink 2.5s infinite ease-in-out; }
+        .btn-amber { animation: pulseAmber 2.8s infinite ease-in-out; }
+
+        /* Efeito de flash rápido (piscar forte) ao clicar */
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-cyan.blink { background-color: #00f0ff; color: #000; box-shadow: 0 0 30px #00f0ff; text-shadow: none; }
+        .btn-pink.blink { background-color: #ff007f; color: #000; box-shadow: 0 0 30px #ff007f; text-shadow: none; }
+        .btn-amber.blink { background-color: #ffaa00; color: #000; box-shadow: 0 0 30px #ffaa00; text-shadow: none; }
+
+        /* Botão de Igual maior */
+        .span-2 {
+            grid-column: span 2;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="calculator">
+        <!-- Tela -->
+        <div class="display" id="display">0</div>
+
+        <!-- Teclado -->
+        <div class="buttons">
+            <button class="btn btn-pink" onclick="clearDisplay(this)">C</button>
+            <button class="btn btn-pink" onclick="appendValue('/', this)">/</button>
+            <button class="btn btn-pink" onclick="appendValue('*', this)">*</button>
+            <button class="btn btn-pink" onclick="appendValue('-', this)">-</button>
+
+            <button class="btn btn-cyan" onclick="appendValue('7', this)">7</button>
+            <button class="btn btn-cyan" onclick="appendValue('8', this)">8</button>
+            <button class="btn btn-cyan" onclick="appendValue('9', this)">9</button>
+            <button class="btn btn-pink" onclick="appendValue('+', this)">+</button>
+
+            <button class="btn btn-cyan" onclick="appendValue('4', this)">4</button>
+            <button class="btn btn-cyan" onclick="appendValue('5', this)">5</button>
+            <button class="btn btn-cyan" onclick="appendValue('6', this)">6</button>
+            <button class="btn btn-amber span-2" onclick="calculate(this)">=</button>
+
+            <button class="btn btn-cyan" onclick="appendValue('1', this)">1</button>
+            <button class="btn btn-cyan" onclick="appendValue('2', this)">2</button>
+            <button class="btn btn-cyan" onclick="appendValue('3', this)">3</button>
+            
+            <button class="btn btn-cyan span-2" onclick="appendValue('0', this)">0</button>
+            <button class="btn btn-cyan" onclick="appendValue('.', this)">.</button>
+        </div>
+    </div>
+
+    <script>
+        const display = document.getElementById('display');
+        let currentInput = '0';
+
+        // Função para fazer o LED piscar intensamente no clique
+        function triggerBlink(element) {
+            element.classList.add('blink');
+            setTimeout(() => {
+                element.classList.remove('blink');
+            }, 150); // Remove o efeito após 150 milissegundos
+        }
+
+        function appendValue(value, element) {
+            triggerBlink(element);
+            
+            if (currentInput === '0' && !isNaN(value)) {
+                currentInput = value;
+            } else {
+                currentInput += value;
+            }
+            updateDisplay();
+        }
+
+        function clearDisplay(element) {
+            triggerBlink(element);
+            currentInput = '0';
+            updateDisplay();
+        }
+
+        function calculate(element) {
+            triggerBlink(element);
+            try {
+                // O eval aqui é seguro por estar limitado aos botões controlados do HTML
+                let result = eval(currentInput);
+                
+                // Trata divisão por zero ou resultados inválidos
+                if (result === Infinity || isNaN(result)) {
+                    currentInput = 'Erro';
+                } else {
+                    // Arredonda para evitar problemas com floats longos (ex: 0.1 + 0.2)
+                    currentInput = Number(result.toFixed(8)).toString();
+                }
+            } catch (error) {
+                currentInput = 'Erro';
+            }
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            display.innerText = currentInput;
+        }
+    </script>
+</body>
+</html>
